@@ -1,0 +1,15 @@
+[package]
+name = "offbrand_synergy"
+version = "0.1.0"
+authors = ["Hand-of-Cthulhu <3rdhandofcthulhu@gmail.com>"]
+
+[[bin]]
+name="server"
+path = "src/server/main.rs"
+
+[[bin]]
+name = "listener"
+path = "src/listener/main.rs"
+
+[dependencies]
+enigo="*"
