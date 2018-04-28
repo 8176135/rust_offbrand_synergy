@@ -6,9 +6,9 @@ use std::io::Read;
 use enigo::{Enigo, KeyboardControllable, Key};
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:13111").expect("Error binding to port: ");
+    let listener = TcpListener::bind("0.0.0.0:13111").expect("Error binding to port: ");
     let mut data= [0u8];
-    let mut enigo = enigo::Enigo::new();
+    let mut enigo = Enigo::new();
 
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
