@@ -4,7 +4,7 @@ use std::net::UdpSocket;
 use std::io::Write;
 
 fn main() {
-    let mut stream = UdpSocket::bind("127.0.0.1:13112").expect("Can't connect to port: ");
+    let mut stream = UdpSocket::bind("0.0.0.0:13112").expect("Can't connect to port: ");
 
     let mut previous_key_state: Vec<bool> = Vec::new();
     previous_key_state.resize(255, false);
@@ -20,12 +20,13 @@ fn main() {
             }
             if previous_key_state[i as usize] != is_current_key_down {
                 previous_key_state[i as usize] = is_current_key_down;
-                match i {
-                    0x30 ... 0x5A => {
-                        stream.send(&[i, is_current_key_down as u8]).expect("Failed to write");
-                    },
-                    _ => {}
-                }
+                stream.send(&[i, is_current_key_down as u8]).expect("Failed to write");
+//                match i {
+//                    0x30 ... 0x5A => {
+//                        stream.send(&[i, is_current_key_down as u8]).expect("Failed to write");
+//                    },
+//                    _ => {}
+//                }
             }
         }
     }

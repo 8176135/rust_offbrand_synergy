@@ -14,9 +14,9 @@ fn main() {
         listener.recv(&mut data).unwrap();
         println!("Data: {}", data[0] as char);
         if data[1] == 0 {
-            enigo.key_up(Key::Layout(data[0] as char))
+            enigo.key_up(Key::Raw(data[0] as u16))
         } else {
-            enigo.key_down(Key::Layout(data[0] as char))
+            enigo.key_down(Key::Raw(data[0] as u16))
         }
     }
 }
