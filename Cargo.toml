@@ -13,5 +13,6 @@ path = "src/listener/main.rs"
 
 [dependencies]
 enigo="*"
-#winapi="*"
+winapi="*"
 user32-sys="*"
+winit="*"
