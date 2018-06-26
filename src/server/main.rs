@@ -3,10 +3,10 @@ extern crate winapi;
 extern crate winit;
 
 use std::net::UdpSocket;
-use winit::os::windows::WindowExt;
-use std::io::Write;
+//use winit::os::windows::WindowExt;
+//use std::io::Write;
 
-use winit::{Event, WindowEvent, VirtualKeyCode, ElementState};
+use winit::{Event, DeviceEvent ,WindowEvent, VirtualKeyCode, ElementState};
 
 fn main() {
     let mut events_loop = winit::EventsLoop::new();
@@ -20,22 +20,22 @@ fn main() {
 
     let mut previous_key_state: Vec<bool> = Vec::new();
     previous_key_state.resize(255, false);
-    //stream.connect("192.168.1.72:13111").expect("Failed to connect");
-    stream.connect("127.0.0.1:13111").expect("Failed to connect");
+    stream.connect("192.168.1.54:13111").expect("Failed to connect");
+//    stream.connect("127.0.0.1:13111").expect("Failed to connect");
 
 //    let is_in_another_window = std::sync::Arc::new(std::sync::Mutex::new(42));
 //    let clone_thing = is_in_another_window.clone();
 //    std::thread::spawn(move || other_thread(clone_thing));
 
     events_loop.run_forever(|event| {
-//        println!("{:?}", event);
+        //println!("{:?}", event);
 //
 //        {
 //            let mut data = is_in_another_window.lock().unwrap();
 //            *data += 1;
 //        }
 
-        window.set_cursor_position(100, 100).expect("Error setting cursor pos");
+        window.set_cursor_position(100, 100).is_ok(); // Don't care
 //        for i in 1..255u8 {
 //            let mut is_current_key_down: bool;
 //            unsafe {
@@ -48,7 +48,7 @@ fn main() {
 //        }
         match event {
             Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => winit::ControlFlow::Break,
-            Event::WindowEvent { event: WindowEvent::KeyboardInput {device_id, input}, ..} => {
+            Event::WindowEvent { event: WindowEvent::KeyboardInput {input, ..}, ..} => {
                 let key_code = if let Some(keycode) = input.virtual_keycode {
                     keycode as u8 + 8
                 } else {
@@ -57,14 +57,40 @@ fn main() {
 
                 if previous_key_state[key_code as usize] != (input.state == ElementState::Pressed) {
                     stream.send(&[key_code, input.state as u8]).expect("Failed to write");
-                    previous_key_state[key_code as usize] = (input.state == ElementState::Pressed);
-                    println!("{}", key_code);
+                    previous_key_state[key_code as usize] = input.state == ElementState::Pressed;
+                    println!("{:X}", key_code);
                 }
                 winit::ControlFlow::Continue
             },
+            Event::WindowEvent { event: WindowEvent::MouseInput { state, button, .. }, .. } => {
+                println!("{:?}, {}", state, btn_to_num(&button));
+                stream.send(&[btn_to_num(&button), state as u8]).expect("Failed to write");
+                winit::ControlFlow::Continue
+            },
+            Event::DeviceEvent { event: DeviceEvent::MouseMotion {delta}, ..} => {
+//                println!("{:?}", delta);
+//                println!("{:b}", ( delta.1.round() as i8) << 4);
+                //stream.send(&[0xFF, ((( delta.1.min(7.0).max(-7.0).round() as i8) << 4) | ((delta.0.min(7.0).max(-7.0).round() as i8) & 0xF)) as u8 ]).expect("Failed to write");
+                stream.send(&[0xFF, (delta.0.min(127.0).max(-127.0).round() as i8) as u8, (delta.1.min(127.0).max(-127.0).round() as i8) as u8]).expect("Failed to write");
+
+                winit::ControlFlow::Continue
+            }
             _ => winit::ControlFlow::Continue,
         }
     });
+}
+
+fn clamp(a: f64, max: f64, min: f64) -> f64 {
+    a.min(max).max(min)
+}
+
+fn btn_to_num(btn: &winit::MouseButton) -> u8 {
+    match *btn {
+        winit::MouseButton::Left => 0,
+        winit::MouseButton::Right => 1,
+        winit::MouseButton::Middle => 2,
+        winit::MouseButton::Other(i) => 2 + i,
+    }
 }
 
 //fn other_thread(other_window: std::sync::Arc<std::sync::Mutex<i32>>) {
