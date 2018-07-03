@@ -5,7 +5,9 @@
       <w>lcontrol</w>
       <w>lmenu</w>
       <w>rcontrol</w>
+      <w>scrn</w>
       <w>stdin</w>
+      <w>woff</w>
     </words>
   </dictionary>
 </component>

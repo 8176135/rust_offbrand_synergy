@@ -10,10 +10,18 @@ path = "src/server/main.rs"
 [[bin]]
 name = "listener"
 path = "src/listener/main.rs"
+#linker = "ld.lld"
 
 [dependencies]
-enigo="*"
-winapi="*"
-user32-sys="*"
-winit="*"
+enigo={git="https://github.com/enigo-rs/enigo.git"}
 lazy_static="*"
+web-view="*"
+
+[target.'cfg(windows)'.dependencies]
+winapi="0.3"
+
+[target.'cfg(unix)'.dependencies]
+libxdo-sys = "0.11.0"
+
+[build-dependencies]
+inline_assets = "0.2.*"

@@ -1,3 +1,3 @@
-
+*.embedded
 /target
 **/*.rs.bk
