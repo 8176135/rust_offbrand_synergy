@@ -12,16 +12,31 @@ name = "listener"
 path = "src/listener/main.rs"
 #linker = "ld.lld"
 
+[lib]
+name = "shared_consts"
+path = "src/shared/lib.rs"
+
 [dependencies]
 enigo={git="https://github.com/enigo-rs/enigo.git"}
 lazy_static="*"
 web-view="*"
+#byteorder="*"
+regex="*"
+bincode="*"
+serde = "*"
+serde_derive = "*"
+serde_json="*"
+
+simple-error="*"
+
+enum_primitive = "*"
+num-traits="*"
 
 [target.'cfg(windows)'.dependencies]
 winapi="0.3"
 
 [target.'cfg(unix)'.dependencies]
-libxdo-sys = "0.11.0"
+xdo-io = {path="xdo-io/"}
 
 [build-dependencies]
-inline_assets = "0.2.*"
+inline_assets = "*"

@@ -1,0 +1,7 @@
+[package]
+name = "xdo-io"
+version = "0.1.0"
+authors = ["hand-of-cthulhu <3rdhandofcthulhu@gmail.com>"]
+
+[dependencies]
+libxdo-sys = "0.11.0"

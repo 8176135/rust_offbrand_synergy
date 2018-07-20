@@ -13,6 +13,8 @@ use std::fs;
 //}
 
 fn main() {
-    fs::write("src/server/html_frontend/connection_screen.html.embedded", inline_assets::inline_file("src/server/html_frontend/connection_screen.html", true).expect("Path error").as_bytes()).expect("File write failed");
-    fs::write("src/listener/html_frontend/listener_screen.html.embedded", inline_assets::inline_file("src/listener/html_frontend/listener_screen.html", true).expect("Path error").as_bytes()).expect("File write failed");
+    fs::write("src/server/html_frontend/connection_screen.html.embedded",
+              inline_assets::inline_file("src/server/html_frontend/connection_screen.html", inline_assets::Config {inline_fonts: true, remove_new_lines: false}).expect("Path error").as_bytes()).expect("File write failed");
+    fs::write("src/listener/html_frontend/listener_screen.html.embedded",
+              inline_assets::inline_file("src/listener/html_frontend/listener_screen.html", Default::default()).expect("Path error").as_bytes()).expect("File write failed");
 }
