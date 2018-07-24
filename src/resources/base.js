@@ -38,8 +38,8 @@ let current_color = null;
 function removeFade(ev) {
     port_modal.classList.remove("popping");
     background_fade.classList.remove("popping");
-    color_idx[current_color].connection_info = valOrPlaceholder(ip_num) + ":" + valOrPlaceholder(port_num);
-    selected_color_idx[current_color].connection_info = color_idx[current_color].connection_info;
+    color_idx[current_color].ip_and_port = valOrPlaceholder(ip_num) + ":" + valOrPlaceholder(port_num);
+    selected_color_idx[current_color].ip_and_port = color_idx[current_color].ip_and_port;
     idxToLine(selected_color_idx[current_color], configured);
 }
 
@@ -103,7 +103,7 @@ function valOrPlaceholder(item) {
 }
 
 function idxToLine(idx, color) {
-    let side = idx.pos_info;
+    let side = idx.side;
     switch (side.outward_direction) {
         case "Up":
             drawVisibleLine(side.position, side.length, 1, color);
@@ -158,10 +158,10 @@ function showMonitorList(json_obj) {
     for (let i = 0; i < json_obj.length; i++) {
         let sides = json_obj[i].sides;
 
-        color_idx[drawLineInit(sides.Up.position, sides.Up.length, 1)] = {pos_info: sides.Up};
-        color_idx[drawLineInit(sides.Down.position, -sides.Down.length, -1)] = {pos_info: sides.Down};
-        color_idx[drawLineInit(sides.Left.position, 1, -sides.Left.length)] = {pos_info: sides.Left};
-        color_idx[drawLineInit(sides.Right.position, -1, sides.Right.length)] = {pos_info: sides.Right};
+        color_idx[drawLineInit(sides.Up.position, sides.Up.length, 1)] = {side: sides.Up};
+        color_idx[drawLineInit(sides.Down.position, -sides.Down.length, -1)] = {side: sides.Down};
+        color_idx[drawLineInit(sides.Left.position, 1, -sides.Left.length)] = {side: sides.Left};
+        color_idx[drawLineInit(sides.Right.position, -1, sides.Right.length)] = {side: sides.Right};
     }
 }
 

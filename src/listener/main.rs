@@ -103,10 +103,12 @@ fn listener_loop(listener: UdpSocket) {
                 if mouse_pos.x == 0 && (data[1] as i8) < 0 {
                     listener.send(&[RESP_CROSSBACK, ((mouse_pos.y as f32 / scrn_size.y as f32).max(0.0).min(1.0) * 255 as f32).round() as u8]).unwrap();
                 }
+                println!("{}, {}", data[1] as i8 as i32, data[2] as i8 as i32);
                 enigo.mouse_move_relative(data[1] as i8 as i32, data[2] as i8 as i32);
             }
             x if x == CmdCode::MousePos as u8 => {
                 let scaled = data[1] as f32 / 255.0;
+                println!("{:?}", Direction::from_u8(data[2]));
                 match Direction::from_u8(data[2]) {
                     Some(Direction::Left) => enigo.mouse_move_to(0, (scaled * scrn_size.y as f32) as i32),
                     Some(Direction::Right) => enigo.mouse_move_to(scrn_size.x, (scaled * scrn_size.y as f32) as i32),

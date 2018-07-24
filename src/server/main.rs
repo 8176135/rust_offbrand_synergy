@@ -54,36 +54,22 @@ fn main() {
 
                           match arg[0] {
                               "connect" => {
-                                  let ip_addr = "192.168.239.129";
-                                  let port_num = "13111";
-                                  {
-                                      let data = parse_return_json(arg[3]);
-                                      println!("{:?}", data);
-                                      *EDGE_LIST.lock().unwrap() = data;
-                                  }
+                                  let data = parse_return_json(arg[1]);
+                                  println!("{:?}", data);
+                                  *EDGE_LIST.lock().unwrap() = data;
+                                  let mut main_threads_lock = all_main_threads.lock().unwrap();
 
-                                  if let Err(e) = STREAM.connect(format!("{}:{}", ip_addr, port_num)) {
-                                      webview.eval(&format!("showConnectedMsg('Error: {}')", e.to_string()));
-                                      println!("{:?}", e);
-                                  } else {
-                                      webview.eval(&format!("showConnectedMsg('Connected at port {}')", port_num));
-                                      println!("{}:{}", ip_addr, port_num);
-                                      let _client_info = init_connection().unwrap();
+                                  main_threads_lock.push(std::thread::spawn(windows_message_pump));
+//                                  main_threads_lock.push(std::thread::spawn(client_response_manager));
+                                  webview.terminate();
 
-                                      let mut main_threads_lock = all_main_threads.lock().unwrap();
-                                      main_threads_lock.push(std::thread::spawn(windows_message_pump));
-                                      main_threads_lock.push(std::thread::spawn(client_response_manager));
-
-                                      unsafe {
-                                          let win_handle = winuser::GetActiveWindow();
-                                          winuser::DestroyWindow(win_handle);
-                                      }
-                                      webview.terminate();
+                                  unsafe {
+                                      let win_handle = winuser::GetActiveWindow();
+                                      winuser::DestroyWindow(win_handle);
                                   }
                               }
                               "loaded" => {
                                   let json_parsed = serde_json::to_string(&output).unwrap();
-//                                  println!("{}", json_parsed);
                                   webview.eval(&format!("showMonitorList({})", json_parsed));
                               }
                               "debug" => {
@@ -100,6 +86,20 @@ fn main() {
         while let Some(join_handle) = unlocked_thread_list.pop() {
             join_handle.join().unwrap();
         }
+    }
+}
+
+fn connect_to_ip(urn: &str) -> Result<(), SimpleError> {
+    if let Err(e) = STREAM.connect(urn) {
+//        webview.eval(&format!("showConnectedMsg('Error: {}')", e.to_string()));
+        println!("{:?}", e);
+        Err(SimpleError::from(e))
+    } else {
+//        webview.eval(&format!("showConnectedMsg('Connected at port {}')", port_num));
+        println!("Connected to {}", urn);
+        let _client_info = init_connection().unwrap();
+
+        Ok(())
     }
 }
 
@@ -282,6 +282,7 @@ extern "system" fn mouse_hook_callback(code: i32, w_param: usize, l_param: isize
                 }
                 println!("SEND IT!: x: {}, y: {}", l_param.pt.x, l_param.pt.y);
                 let pos_frac = (edge.side.percent_pos(l_param.pt.into()) * 255.0).round() as u8;
+                connect_to_ip(&edge.ip_and_port).expect("Can't connect");
                 STREAM.send(&[CmdCode::MousePos as u8, pos_frac, edge.side.outward_direction() as u8]).expect("Failed to write");
                 set_transfer(true);
             }
@@ -306,10 +307,11 @@ fn monitor_info_from_point(x: i32, y: i32) -> ScreenRect {
 }
 
 fn set_transfer(set_state: bool) {
-    CURRENTLY_TRANSFERRING.store(set_state, Ordering::Relaxed);
     if set_state {
-        unsafe { winuser::SetCursorPos(0, 0); }
+        std::thread::spawn(|| {unsafe { println!("{}", winuser::SetCursorPos(0, 0)) }});
+        unsafe { println!("{}", winuser::SetCursorPos(0, 0)) }
     }
+    CURRENTLY_TRANSFERRING.store(set_state, Ordering::Relaxed);
     println!("Current state: {}", set_state);
 }
 
