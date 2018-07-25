@@ -1,9 +1,13 @@
 <component name="ProjectDictionaryState">
   <dictionary name="Hand of Cthulhu">
     <words>
+      <w>coords</w>
       <w>keycode</w>
       <w>lcontrol</w>
+      <w>lerp</w>
       <w>lmenu</w>
+      <w>mousemove</w>
+      <w>mousescroll</w>
       <w>rcontrol</w>
       <w>scrn</w>
       <w>stdin</w>

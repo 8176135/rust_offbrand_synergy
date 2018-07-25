@@ -121,12 +121,21 @@ impl RectSide {
             Direction::Down => point.y > self.position.y && point.x < self.position.x && point.x > self.position.x - self.length,
         }
     }
-    pub fn percent_pos(&self, point: Vector2) -> f32 {
+    pub fn get_pos_percent(&self, point: Vector2) -> f32 {
         match self.outward_direction {
             Direction::Left => inverse_lerp(point.y, self.position.y, self.position.y - self.length),
-            Direction::Right =>  inverse_lerp(point.y, self.position.y, self.position.y + self.length),
+            Direction::Right => inverse_lerp(point.y, self.position.y, self.position.y + self.length),
             Direction::Up => inverse_lerp(point.x, self.position.x, self.position.x + self.length),
             Direction::Down => inverse_lerp(point.x, self.position.x, self.position.x - self.length),
+        }
+    }
+
+    pub fn get_percent_pos(&self, percent: f32) -> Vector2 {
+        match self.outward_direction {
+            Direction::Left => Vector2 { y: lerp(percent, self.position.y, self.position.y - self.length).round() as i32, x: self.a().x },
+            Direction::Right => Vector2 { y: lerp(percent, self.position.y, self.position.y + self.length).round() as i32, x: self.a().x },
+            Direction::Up => Vector2 { x: lerp(percent, self.position.x, self.position.x + self.length).round() as i32, y: self.a().y },
+            Direction::Down => Vector2 { x: lerp(percent, self.position.x, self.position.x - self.length).round() as i32, y: self.a().y },
         }
     }
 
@@ -140,7 +149,7 @@ impl RectSide {
 
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScreenRect {
-    sides: HashMap<Direction, RectSide>,
+    pub sides: HashMap<Direction, RectSide>,
 }
 
 impl ScreenRect {
@@ -187,6 +196,10 @@ fn inverse_lerp(x: i32, a: i32, b: i32) -> f32 {
     (x - a) as f32 / ((b - a) as f32)
 }
 
+fn lerp(x: f32, a: i32, b: i32) -> f32 {
+    a as f32 + x * (b - a) as f32
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[derive(Copy, Clone)]
 pub struct ClientInfo {
@@ -195,7 +208,7 @@ pub struct ClientInfo {
 
 impl ScreenCollection {}
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ScreenCollection(pub Vec<ScreenRect>);
 
 #[cfg(target_os = "windows")]
@@ -208,7 +221,7 @@ impl From<windef::RECT> for ScreenRect {
 #[derive(Clone, Deserialize, Debug)]
 pub struct ConnectionInfo {
     pub ip_and_port: String,
-    pub side: RectSide
+    pub side: RectSide,
 }
 
 pub enum CmdCode {

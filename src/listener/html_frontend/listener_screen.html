@@ -5,26 +5,23 @@
 </head>
 <body>
 <p style="overflow:hidden; max-height: 43px"><b>Status: </b> <span id="is_connected">Not listening</span></p>
+<div id="background_darken"></div>
+<div id="portInfo">
+    <!--<div style="float:left;margin-right:20px;">-->
+        <!--<label for="ip_num">Unique ID:</label>-->
+        <!--<input type="text" name="ip_num" id="ip_num" placeholder="192.168.239.129">-->
+    <!--</div>-->
+    <div>
+        <label for="port_num">Port:</label>
+        <input type="number" name="port_num" id="port_num" max="65500" min="1" placeholder="13111">
+    </div>
+</div>
+<!--<label for="port_num">Port:</label>-->
+<!--<input type="number" name="port_num" id="port_num" max="65500" min="1" placeholder="13111">-->
+<canvas id="monitorCanvas" width="580" height="200" style="border:1px solid #333; padding: 6px;"></canvas>
 <form>
-
-    <label for="port_num">Port:</label>
-    <input type="number" name="port_num" id="port_num" max="65500" min="1" placeholder="13111">
-
-    <br><br>
-    <button type=submit onclick="external.invoke('listen ' + valOrPlaceholder(document.getElementById('port_num')))">Listen</button>
+    <button type=submit onclick="listen()">Listen</button>
 </form>
-<script type="text/javascript">
-    function showConnectedMsg(e) {
-        document.getElementById('is_connected').innerHTML = e;
-    }
-
-    function valOrPlaceholder(item) {
-        if (item.value) {
-            return item.value;
-        } else {
-            return item.placeholder;
-        }
-    }
-</script>
+<script src="../../resources/base.js"></script>
 </body>
 </html>

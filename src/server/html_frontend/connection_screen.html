@@ -5,20 +5,20 @@
 </head>
 <body>
 <p style="overflow:hidden; max-height: 43px"><b>Status: </b> <span id="is_connected">Not connected</span></p>
-<form>
-    <div id="background_darken"></div>
-    <div id="portInfo">
-        <div style="float:left;margin-right:20px;">
-            <label for="ip_num">Client IP:</label>
-            <input type="text" name="ip_num" id="ip_num" placeholder="192.168.239.129">
-        </div>
-        <div style="float: left;">
-            <label for="port_num">Port:</label>
-            <input type="number" name="port_num" id="port_num" max="65500" min="1" placeholder="13111">
-        </div>
-    </div>
-    <canvas id="monitorCanvas" width="580" height="200" style="border:1px solid #333; padding: 6px;"></canvas>
 
+<div id="background_darken"></div>
+<div id="portInfo">
+    <div style="float:left;margin-right:20px;">
+        <label for="ip_num">Client IP:</label>
+        <input type="text" name="ip_num" id="ip_num" placeholder="192.168.239.129">
+    </div>
+    <div style="float: left;">
+        <label for="port_num">Port:</label>
+        <input type="number" name="port_num" id="port_num" max="65500" min="1" placeholder="13111">
+    </div>
+</div>
+<canvas id="monitorCanvas" width="580" height="200" style="border:1px solid #333; padding: 6px;"></canvas>
+<form>
     <button type=submit onclick="connect()">
         Connect
     </button>

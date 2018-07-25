@@ -3,6 +3,7 @@ extern crate web_view;
 extern crate xdo_io;
 extern crate regex;
 extern crate bincode;
+extern crate serde_json;
 extern crate shared_consts;
 extern crate num_traits;
 
@@ -18,29 +19,39 @@ use enigo::{Enigo, KeyboardControllable, MouseControllable, Key, MouseButton};
 
 const HTML: &'static str = include_str!("html_frontend/listener_screen.html.embedded");
 
+
 fn main() {
-    std::time::SystemTime::now();
+    let display_output = build_monitor_layout();
     let all_main_threads = Arc::new(Mutex::new(Vec::new()));
-    web_view::run("Listener", web_view::Content::Html(HTML), Some((200, 150)), false, true, move |_webview| {},
+    web_view::run("Listener", web_view::Content::Html(HTML), Some((600, 450)), false, true, move |_webview| {},
                   {
                       let all_main_threads = all_main_threads.clone();
                       move |webview, arg, _userdata| {
                           let arg: Vec<&str> = arg.split(' ').collect();
-                          let port_num = arg[1];
+                          let port_num = "13111";
 
                           match arg[0] {
                               "listen" => {
+//                                  println!("{:?}", serde_json::from_str::<ConnectionInfo>(arg[1]));
                                   let listener = UdpSocket::bind(format!("0.0.0.0:{}", port_num));
                                   if let Err(e) = listener {
                                       webview.eval(&format!("showConnectedMsg('Error: {}')", e.to_string()));
                                       println!("{:?}", e);
                                   } else if let Ok(listener) = listener {
                                       webview.eval(&format!("showConnectedMsg('Connected at port {}')", port_num));
-                                      all_main_threads.lock().unwrap().push(std::thread::spawn(|| {
-                                          listener_loop(listener);
+                                      let display_output = display_output.clone();
+                                      all_main_threads.lock().unwrap().push(std::thread::spawn(move || {
+                                          listener_loop(listener, &display_output);
                                       }));
                                       webview.terminate();
                                   }
+                              }
+                              "loaded" => {
+                                  let json_parsed = serde_json::to_string(&display_output).unwrap();
+                                  webview.eval(&format!("showMonitorList({})", json_parsed));
+                              }
+                              "debug" => {
+                                  println!("{}", arg[1]);
                               }
                               _ => unimplemented!()
                           }
@@ -56,19 +67,24 @@ fn main() {
     }
 }
 
-fn listener_loop(listener: UdpSocket) {
+fn build_monitor_layout() -> Box<ScreenCollection> {
+    let output = String::from_utf8(
+        std::process::Command::new("xrandr").arg("--listmonitors").output().expect("failed to run xrandr").stdout).unwrap();
+
+    Box::new(ScreenCollection(regex::Regex::new(r#"(\w+) (\d+?)/\d+?x(\d+?)/\d+?\+(\d+)\+(\d+)"#).unwrap()
+        .captures_iter(&output).map(|c| {
+        let data: Vec<i32> = c.iter().skip(2).map(|c| c.unwrap().as_str().parse::<i32>().unwrap()).collect();
+        ScreenRect::new_from_dimensions(data[2], data[3], data[0], data[1])
+    }).collect::<Vec<ScreenRect>>()))
+}
+
+fn listener_loop(listener: UdpSocket, monitors: &ScreenCollection) {
     let mut enigo: Enigo = Enigo::new();
     let xdo = xdo_io::Xdo::new();
     let mut data = [0u8; 3];
 
-    let scrn_size = {
-        let output = String::from_utf8(
-            std::process::Command::new("xrandr").arg("--listmonitors").output().expect("failed to run xrandr").stdout).unwrap();
-        let temp = regex::Regex::new(r#"\*([\w]+?) (\d+?)/\d+?x(\d+?)/\d+?\+"#).unwrap()
-            .captures(&output)
-            .expect("No monitors found?");
-        Vector2 { x: temp.get(2).unwrap().as_str().parse::<i32>().unwrap(), y: temp.get(3).unwrap().as_str().parse::<i32>().unwrap() }
-    };
+    let mut input_direction = Direction::Right;
+
     println!("Listening started");
     loop {
         let addr = listener.recv_from(&mut data).unwrap().1;
@@ -100,28 +116,31 @@ fn listener_loop(listener: UdpSocket) {
             }
             x if x == CmdCode::MouseMove as u8 => {
                 let (mouse_pos, screen_num) = xdo.get_mouse_location();
-                if mouse_pos.x == 0 && (data[1] as i8) < 0 {
-                    listener.send(&[RESP_CROSSBACK, ((mouse_pos.y as f32 / scrn_size.y as f32).max(0.0).min(1.0) * 255 as f32).round() as u8]).unwrap();
+                let side = monitors.0.iter().map(|c| c.sides.get(&input_direction).unwrap()).next().unwrap();
+//                println!("{:?}", Vector2 { x:mouse_pos.x + data[1] as i8 as i32, y: mouse_pos.y});
+//                println!("{:?}", side);
+                if side.is_point_outside(Vector2 { x:mouse_pos.x + data[1] as i8 as i32, y: mouse_pos.y}) {
+                    println!("rergegr");
+                    listener.connect(addr).unwrap();
+
+                    listener.send(&[RESP_CROSSBACK, (side.get_pos_percent(Vector2 { x: mouse_pos.x, y: mouse_pos.y }).max(0.0).min(1.0) * 255 as f32).round() as u8]).unwrap();
                 }
-                println!("{}, {}", data[1] as i8 as i32, data[2] as i8 as i32);
+//                println!("{}, {}", data[1] as i8 as i32, data[2] as i8 as i32);
                 enigo.mouse_move_relative(data[1] as i8 as i32, data[2] as i8 as i32);
             }
             x if x == CmdCode::MousePos as u8 => {
                 let scaled = data[1] as f32 / 255.0;
-                println!("{:?}", Direction::from_u8(data[2]));
-                match Direction::from_u8(data[2]) {
-                    Some(Direction::Left) => enigo.mouse_move_to(0, (scaled * scrn_size.y as f32) as i32),
-                    Some(Direction::Right) => enigo.mouse_move_to(scrn_size.x, (scaled * scrn_size.y as f32) as i32),
-                    Some(Direction::Up) => enigo.mouse_move_to((scaled * scrn_size.x as f32) as i32, 0),
-                    Some(Direction::Down) => enigo.mouse_move_to((scaled * scrn_size.x as f32) as i32, scrn_size.y),
-                    None => unimplemented!()
-                }
+                let dir_outwards = Direction::from_u8(data[2] ^ 0b11).unwrap();
+                input_direction = dir_outwards;
+                let side = monitors.0.iter().map(|c| c.sides.get(&dir_outwards).unwrap()).next().unwrap();
+                let pos = side.get_percent_pos(scaled);
+                enigo.mouse_move_to(pos.x, pos.y);
             }
-            x if x == CmdCode::Init as u8 => {
-                println!("Init");
-                listener.connect(addr).unwrap();
-                listener.send(&bincode::serialize(&(RESP_INIT, ClientInfo { scrn_size })).expect("Binary seralize failed")).expect("Unable to send back info");
-            }
+//            x if x == CmdCode::Init as u8 => {
+//                println!("Init");
+//                listener.connect(addr).unwrap();
+//                listener.send(&bincode::serialize(&(RESP_INIT, ClientInfo { scrn_size })).expect("Binary seralize failed")).expect("Unable to send back info");
+//            }
             _ => {
                 let key_to_press = match data[0] {
                     0x30...0x39 => Key::Layout(data[0] as char),

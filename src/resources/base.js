@@ -74,7 +74,9 @@ function onClick(ev) {
         idxToLine(current_idx, selected_option);
         port_modal.style.left = Math.min(ev.clientX, window.innerWidth - port_modal.offsetWidth) + "px";
         port_modal.style.top = Math.min(ev.clientY, window.innerHeight - port_modal.offsetHeight) + "px";
-        ip_num.value = "";
+        if (ip_num) {
+            ip_num.value = "";
+        }
         port_num.value = "";
         port_modal.classList.add("popping");
         background_fade.classList.add("popping");
@@ -95,10 +97,14 @@ function showConnectedMsg(e) {
 }
 
 function valOrPlaceholder(item) {
-    if (item.value) {
-        return item.value;
+    if (item) {
+        if (item.value) {
+            return item.value;
+        } else {
+            return item.placeholder;
+        }
     } else {
-        return item.placeholder;
+        return "";
     }
 }
 
@@ -148,6 +154,10 @@ function getRandomColor() {
     let g = Math.round(Math.random() * 255);
     let b = Math.round(Math.random() * 255);
     return "rgb(" + r + "," + g + "," + b + ")";
+}
+
+function listen() {
+    external.invoke('listen');
 }
 
 function connect() {
